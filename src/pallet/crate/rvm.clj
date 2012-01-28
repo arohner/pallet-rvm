@@ -43,13 +43,15 @@
               ;;; some form of java, not listed here
               ]})
 
-(defn rvm  [session]
+(defn rvm  [session & {:keys [stable]}]
   "install rvm, as the limited user"
   (-> session
       (package/packages :aptitude (-> dependencies :aptitude))
       (exec-script/exec-checked-script
        "Installing RVM"
-       (sudo "-i" "-u" ~(-> session :user :username) "bash" "< <(curl -s https://rvm.beginrescueend.com/install/rvm)"))
+       (if stable
+         (sudo "-i" "-u" ~(-> session :user :username) "bash" "-s" "stable" "< <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)")
+         (sudo "-i" "-u" ~(-> session :user :username) "bash" "< <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)")))
       (exec-script/exec-checked-script
        "Installing RVM source fn to .bash_profile"
        (sudo "-i" "-u" ~(-> session :user :username) "bash" "-c" "\"echo '[[ -s \"$HOME/.rvm/scripts/rvm\" ]] && . \"$HOME/.rvm/scripts/rvm\" # Load RVM function' >> ~/.bash_profile\""))))
