@@ -43,7 +43,7 @@
               ;;; some form of java, not listed here
               ]})
 
-(defn rvm  [session]
+(defn rvm-user  [session]
   "install rvm, as the limited user"
   (-> session
       (package/packages :aptitude (-> dependencies :aptitude))
@@ -53,3 +53,15 @@
       (exec-script/exec-checked-script
        "Installing RVM source fn to .bash_profile"
        (sudo "-i" "-u" ~(-> session :user :username) "bash" "-c" "\"echo '[[ -s \"$HOME/.rvm/scripts/rvm\" ]] && . \"$HOME/.rvm/scripts/rvm\" # Load RVM function' >> ~/.bash_profile\""))))
+
+(defn rvm  [session & {:keys [stable]}]
+  "install rvm as root (multi-user install)"
+  (-> session
+      (package/packages :aptitude (-> dependencies :aptitude))
+      (exec-script/exec-checked-script
+       "Installing RVM"
+       (if stable
+         (bash "-s" "stable" "< <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)")
+         (bash "< <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)"))
+       (source "/etc/profile.d/rvm.sh")
+       (usermod -a -G rvm ~(-> session :user :username)))))
